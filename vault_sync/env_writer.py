@@ -53,3 +53,24 @@ def read_env_file(env_path: str) -> Dict[str, str]:
                 key, _, value = line.partition("=")
                 result[key.strip()] = value.strip().strip('"')
     return result
+
+
+def delete_env_keys(keys: list, env_path: str) -> int:
+    """
+    Remove the specified *keys* from an existing .env file.
+
+    Returns the number of keys actually removed.
+    """
+    existing = read_env_file(env_path)
+    keys_to_remove = set(keys)
+    removed = keys_to_remove & existing.keys()
+    if not removed:
+        return 0
+
+    updated = {k: v for k, v in existing.items() if k not in keys_to_remove}
+    path = Path(env_path)
+    with path.open("w", encoding="utf-8") as fh:
+        for key, value in sorted(updated.items()):
+            fh.write(_format_entry(key, value))
+
+    return len(removed)
