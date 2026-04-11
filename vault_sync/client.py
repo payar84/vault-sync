@@ -1,6 +1,6 @@
 """Vault client wrapper for fetching secrets."""
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import hvac
 
@@ -46,4 +46,24 @@ class VaultClient:
         except hvac.exceptions.Forbidden as exc:
             raise PermissionError(
                 f"Access denied to secret path '{path}'. Check token permissions."
+            ) from exc
+
+    def list_secrets(self, path: str) -> List[str]:
+        """List secret keys under *path* in the KV v2 mount.
+
+        Returns a list of key names (directories end with '/').
+        Raises KeyError if the path does not exist.
+        Raises PermissionError if the token lacks list privileges.
+        """
+        try:
+            response = self._client.secrets.kv.v2.list_secrets(
+                path=path,
+                mount_point=self.config.mount_point,
+            )
+            return response["data"]["keys"]
+        except hvac.exceptions.InvalidPath as exc:
+            raise KeyError(f"Secret path '{path}' not found in Vault.") from exc
+        except hvac.exceptions.Forbidden as exc:
+            raise PermissionError(
+                f"Access denied to list path '{path}'. Check token permissions."
             ) from exc
