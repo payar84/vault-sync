@@ -29,6 +29,18 @@ def _configure_parser(parser: argparse.ArgumentParser) -> None:
 
 
 def run_lint_command(args: argparse.Namespace) -> int:
+    """Run the lint command against the specified .env file.
+
+    Returns:
+        0 if no issues (or only warnings when not in strict mode),
+        1 if errors are found or warnings are found in strict mode,
+        2 if the file cannot be read.
+    """
+    if not args.env_file.exists():
+        if not args.quiet:
+            print(f"Error: file not found: {args.env_file}", file=sys.stderr)
+        return 2
+
     result = lint_env_file(args.env_file)
 
     if not args.quiet:
