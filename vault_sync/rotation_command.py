@@ -16,6 +16,8 @@ def _load_records(path: str) -> Dict[str, str]:
             return json.load(fh)
     except FileNotFoundError:
         return {}
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Rotation records file '{path}' contains invalid JSON: {exc}") from exc
 
 
 def _save_records(path: str, records: Dict[str, str]) -> None:
@@ -33,7 +35,12 @@ def run_rotation_command(args: argparse.Namespace) -> int:
 
     records = _load_records(args.records_file)
     for key, ts in records.items():
-        tracker.record_rotation(key, datetime.fromisoformat(ts))
+        try:
+            tracker.record_rotation(key, datetime.fromisoformat(ts))
+        except ValueError as exc:
+            raise ValueError(
+                f"Invalid timestamp for key '{key}' in '{args.records_file}': {exc}"
+            ) from exc
 
     if args.rotation_action == "mark":
         for key in args.keys:
