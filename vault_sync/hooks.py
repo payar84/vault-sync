@@ -65,4 +65,13 @@ def run_hooks(commands: List[str], timeout: int = 30) -> List[HookResult]:
 
 
 def all_ok(results: List[HookResult]) -> bool:
+    """Return True if all hook results indicate success."""
     return all(r.ok for r in results)
+
+
+def failed_hooks(results: List[HookResult]) -> List[HookResult]:
+    """Return only the hook results that did not succeed.
+
+    Useful for reporting or logging which hooks failed after a sync run.
+    """
+    return [r for r in results if not r.ok]
