@@ -77,3 +77,26 @@ def run_notify(config: NotifyConfig, env_vars: Optional[dict] = None) -> NotifyR
             stderr="",
             error=f"command not found: {config.command}",
         )
+    except OSError as exc:
+        return NotifyResult(
+            success=False,
+            returncode=-1,
+            stdout="",
+            stderr="",
+            error=f"failed to execute command: {exc}",
+        )
+
+
+def should_notify(config: NotifyConfig, success: bool) -> bool:
+    """Return True if the notification should be sent given the sync outcome.
+
+    Args:
+        config: The notification configuration.
+        success: Whether the sync operation succeeded.
+
+    Returns:
+        True if the notification command should be run, False otherwise.
+    """
+    if success:
+        return config.on_success
+    return config.on_failure
