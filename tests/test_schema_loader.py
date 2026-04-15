@@ -77,3 +77,17 @@ def test_empty_schema_validates_anything():
     from vault_sync.schema import SecretSchema
     schema = SecretSchema()
     assert schema.validate({"ANY_KEY": "any_value"}) == []
+
+
+def test_load_json_required_field_defaults_to_true(tmp_path):
+    """Fields without an explicit 'required' key should default to required."""
+    data = {
+        "fields": [
+            {"name": "IMPLICIT_REQUIRED", "type": "string"},
+        ]
+    }
+    p = tmp_path / "schema.json"
+    p.write_text(json.dumps(data))
+    schema = load_schema_file(str(p))
+    by_name = {f.name: f for f in schema.fields}
+    assert by_name["IMPLICIT_REQUIRED"].required is True
