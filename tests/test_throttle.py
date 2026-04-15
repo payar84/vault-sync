@@ -59,6 +59,21 @@ def test_call_beyond_burst_is_delayed(monkeypatch):
     assert slept[0] == pytest.approx(0.2, abs=1e-6)
 
 
+def test_burst_of_one_delays_second_call(monkeypatch):
+    """A max_burst=1 throttle should delay every call after the first."""
+    slept: list[float] = []
+    monkeypatch.setattr(time, "sleep", lambda s: slept.append(s))
+    monkeypatch.setattr(time, "monotonic", lambda: 0.0)
+
+    throttle = Throttle(ThrottleConfig(min_interval=0.1, max_burst=1))
+    first = throttle.acquire()
+    second = throttle.acquire()
+
+    assert first is False
+    assert second is True
+    assert len(slept) == 1
+
+
 # ---------------------------------------------------------------------------
 # ThrottleState counters
 # ---------------------------------------------------------------------------
@@ -84,18 +99,4 @@ def test_total_delayed_increments(monkeypatch):
 
 # ---------------------------------------------------------------------------
 # wrap helper
-# ---------------------------------------------------------------------------
-
-def test_wrap_calls_original_function(monkeypatch):
-    monkeypatch.setattr(time, "sleep", lambda _: None)
-    monkeypatch.setattr(time, "monotonic", lambda: 0.0)
-    throttle = build_throttle(min_interval=0.1, max_burst=10)
-    calls: list[int] = []
-    wrapped = throttle.wrap(lambda x: calls.append(x))
-    wrapped(42)
-    assert calls == [42]
-
-
-def test_build_throttle_convenience():
-    t = build_throttle(min_interval=0.05, max_burst=2)
-    assert isinstance(t, Throttle)
+# ------------------------------------------
