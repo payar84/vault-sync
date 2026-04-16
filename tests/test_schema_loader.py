@@ -91,3 +91,11 @@ def test_load_json_required_field_defaults_to_true(tmp_path):
     schema = load_schema_file(str(p))
     by_name = {f.name: f for f in schema.fields}
     assert by_name["IMPLICIT_REQUIRED"].required is True
+
+
+def test_load_invalid_json_raises(tmp_path):
+    """A JSON file with invalid syntax should raise a ValueError."""
+    p = tmp_path / "schema.json"
+    p.write_text("{not valid json")
+    with pytest.raises(ValueError, match="Invalid JSON"):
+        load_schema_file(str(p))
